@@ -2,7 +2,7 @@
 #include "led.h"
 
 /* Simulated LED state */
-static uint8_t led_state = 0;
+uint8_t led_state = 0;
 
 void led_init(void)
 {
