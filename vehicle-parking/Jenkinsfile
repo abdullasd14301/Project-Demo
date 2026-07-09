@@ -56,15 +56,8 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: 'vehicle-parking/target/surefire-reports/*.xml'
-            publishHTML([
-                reportDir: 'vehicle-parking/target/surefire-reports',
-                reportFiles: 'index.html',
-                reportName: 'Unit Test Report',
-                keepAll: true,
-                allowMissing: true
-            ])
             echo "=========================================="
-            echo "Test Results Archived and Published"
+            echo "Unit Test Results Processed and Archived"
             echo "=========================================="
             echo "Build Finished at: ${new Date()}"
             echo "=========================================="
