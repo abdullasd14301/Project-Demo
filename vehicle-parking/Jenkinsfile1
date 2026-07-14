@@ -1,0 +1,102 @@
+pipeline {
+
+    agent any
+
+    options {
+        timestamps()
+        timeout(time: 1, unit: 'HOURS')
+    }
+
+    tools {
+        maven 'maven'
+    }
+
+    stages {
+
+        stage('Start') {
+            steps {
+                echo "=========================================="
+                echo "Build Started at: ${new Date()}"
+                echo "=========================================="
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Compile') {
+            steps {
+                dir('vehicle-parking') {
+                    sh 'mvn clean compile'
+                }
+            }
+        }
+
+        stage('Quality Checks') {
+            parallel {
+
+                stage('Unit Tests') {
+                    steps {
+                        dir('vehicle-parking') {
+                            sh 'mvn test -Dtest=**/*Test.java'
+                        }
+                    }
+                }
+
+                stage('Code Style Check') {
+                    steps {
+                        dir('vehicle-parking') {
+                            sh 'mvn checkstyle:check || true'
+                        }
+                    }
+                }
+
+            }
+        }
+
+        stage('Package') {
+            steps {
+                dir('vehicle-parking') {
+                    sh 'mvn package'
+                }
+            }
+        }
+
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: 'vehicle-parking/target/*.jar'
+
+                archiveArtifacts(
+                    artifacts: 'vehicle-parking/target/surefire-reports/**',
+                    allowEmptyArchive: true
+                )
+            }
+        }
+    }
+
+    post {
+        always {
+            junit(
+                allowEmptyResults: true,
+                testResults: 'vehicle-parking/target/surefire-reports/*.xml'
+            )
+
+            echo "=========================================="
+            echo "Unit Test Results Processed and Archived"
+            echo "=========================================="
+            echo "Build Finished at: ${new Date()}"
+            echo "=========================================="
+        }
+
+        success {
+            echo "Build SUCCESS"
+        }
+
+        failure {
+            echo "Build FAILED"
+        }
+    }
+}
